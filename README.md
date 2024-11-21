@@ -1,7 +1,7 @@
 # XML2YAML-OS
 
 # Introduction
-XML2YAML-OS is the open source version of a CLI program initially developed for the journal [Philosophy and the Mind Sciences](https://philosophymindscience.org/). XML2YAML-OS transforms OJS-XML into a YAML format for later use in the pandoc typesetting workflow. The program is written in Python and uses the `lxml` library for XML parsing. The program is designed to be used in a Docker container, but can also be used locally. The program is part of the [Magic Manuscript Maker Typesetting Workflow](https://github.com/phimisci) of the journal.
+XML2YAML-OS is the open source version of a CLI program initially developed for the journal [Philosophy and the Mind Sciences](https://philosophymindscience.org/). XML2YAML-OS transforms OJS XML into a YAML format for later use in the pandoc typesetting workflow. The program is written in Python and uses the `lxml` library for XML parsing. The program is designed to be used in a Docker container, but can also be used locally. The program is part of the [Magic Manuscript Maker Typesetting Workflow](https://github.com/phimisci) of the journal.
 
 The YAML format in this repository was developed in view of the default template of the [Typesetting-Container-OS](https://github.com/phimisci/typesetting-container-os). If you need to parse different attributes or elements from the OJS XML, you can easily adjust the `xml2yaml.py` script to your needs.
 
@@ -51,7 +51,7 @@ doi: 10.1111/12345678
 author-short: Darling, W., & Pan, P.
 ```
 
-Note that some fields can also have empty values, which will simply cause the fields to be emtpy in the rendered files created with [Typesetting-Container-OS](https://github.com/phimisci/typesetting-container-os) (e.g. `subtitle`).
+Note that some fields can also have empty values, which will simply cause the fields to be empty in the rendered files created with [Typesetting-Container-OS](https://github.com/phimisci/typesetting-container-os) (e.g. `subtitle`).
 
 ## Local usage
 To use XML2YAML locally, you can simply run the `xml2yaml.py` script with the path to the OJS XML file as an argument. For example, if you have an XML file called `article.xml` in the same folder as the `xml2yaml.py` script, you can run the following command:
@@ -89,7 +89,7 @@ If you want to use XML2YAML in a Docker container, you can either use the image 
 docker run --rm -v $(pwd)/files/test/article.xml:/app/xml_input/xml_file.xml -v $(pwd):/app/yaml_output xml2yaml-os article.xml
 ```
 
-In this command, we first mount (`-v`) the `article.xml` file into the container under the path `/app/xml_input/xml_file.xml`. We then mount the current folder into the container under the path `/app/yaml_output` so that we the YAML output will be visible in our current working folder. The last argument `article.xml` is the filename only and is used as an argument to the container. The container will then create a file called `metadata.yaml` in the `yaml_output` folder, which should be visible in the current working directory on our local machine.
+In this command, we first mount (`-v`) the `article.xml` file into the container under the path `/app/xml_input/xml_file.xml`. We then mount the current folder into the container under the path `/app/yaml_output` so that the YAML output will be visible in our current working folder. The last argument `article.xml` is the filename only and is used as an argument the `xml2yaml.py` file in the container. The container will then create a file called `metadata.yaml` in the `yaml_output` folder, which should be visible in the current working directory on our local machine (assuming that it has been mounted as previously shown).
 
 Similar to the local usage, you can also pass additional arguments to the container. The following command shows how to run the container with the `article.xml` file and additional arguments:
 
