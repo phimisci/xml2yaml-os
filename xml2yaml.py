@@ -47,7 +47,7 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     assert xml_filepath is not None
     # OJS XML file should be in the xml folder
     if os.environ.get("IS_CONTAINER") == "true":
-        xml_filepath = "xml/"+xml_filepath
+        xml_filepath = "xml_input/"+xml_filepath
     else:
         xml_filepath = xml_filepath
     # Check if file exists
@@ -241,7 +241,7 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
         data_dict["doi"] = "NO_DOI_FOUND"
 
     ### Save YAML metadata
-    with open("xml/metadata.yaml", "w", encoding="utf-8") as f:
+    with open("yaml_output/metadata.yaml", "w", encoding="utf-8") as f:
         yaml.dump(data_dict, f, allow_unicode=True, default_flow_style=False, explicit_start=True, explicit_end=True, default_style="")
 
 if __name__ == "__main__":
