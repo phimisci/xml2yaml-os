@@ -22,14 +22,15 @@ def parse_arguments() -> Tuple[Optional[str], Optional[str], Optional[int], Opti
     # Sometimes, the ORCID is not present in the XML file. In this case, the ORCID can be passed as a command line argument
     # Example: --orcid Starke=0000-0001-1111-1111 Jurczyk=0000-0002-5943-2305
     parser.add_argument("-o", "--orcid", type=str, nargs="+", help="ORCID key-value pairs of authors (separated via blank space when multiple authors): --orcid <AUTHOR_LASTNAME>=<ORCID> || --orcid Starke=0000-0001-1111-1111 Jurczyk=0000-0002-5943-2305")
-    args = parser.parse_args()
     # Get DOI
     parser.add_argument("-d", "--doi", type=str, help="DOI of the article.")
+    # Parse arguments
+    args = parser.parse_args()
     # The path to the XML file can be accessed using the args.xml_file attribute
     xml_file_path = args.xml_file
     return (xml_file_path, args.year, args.volume, args.orcid, args.doi)
 
-def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str], orcid: Optional[List[str]]) -> None:
+def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str], orcid: Optional[List[str]], doi: Optional[str]) -> None:
     '''Main program logic to convert XML2YAML.
 
         Parameters
@@ -45,7 +46,10 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     '''
     assert xml_filepath is not None
     # OJS XML file should be in the xml folder
-    xml_filepath = "xml/"+xml_filepath
+    if os.environ.get("IS_CONTAINER") == "true":
+        xml_filepath = "xml/"+xml_filepath
+    else:
+        xml_filepath = xml_filepath
     # Check if file exists
     if not os.path.isfile(xml_filepath):
         print("ERROR_NO_FILE_FOUND")
@@ -205,7 +209,6 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
         
         ### Create author short name
         #### First we need to create two abbreviated versions of name (part. if given name has multiple parts)
-        given_name_parsed_light: str = parse_given_name(given_name, abbr_style="light")
         given_name_parsed_full: str = parse_given_name(given_name, abbr_style="full")
 
         #### Layout for "middle" author (in case authors > 2)
@@ -228,10 +231,13 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
         auth_index += 1
 
     ### Parse DOI
-    ### TODO: Add DOI from XML if present
-    if doi is not None:
+    if publication_data.find(".//{http://pkp.sfu.ca}id[@type='doi']") is not None:
+        doi_element = publication_data.find(".//{http://pkp.sfu.ca}id[@type='doi']")
+        doi_xml = doi_element.text if doi_element.text else "NO_DOI_FOUND"
+        data_dict["doi"] = SingleQuotedString(doi_xml)
+    if doi is not None: # Important: DOI from CLI argument overwrites XML DOI!!
         data_dict["doi"] = SingleQuotedString(doi)
-    else:
+    elif data_dict["doi"] is None:
         data_dict["doi"] = "NO_DOI_FOUND"
 
     ### Save YAML metadata

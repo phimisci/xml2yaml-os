@@ -23,7 +23,6 @@ def create_author_dict_4yaml() -> OrderedDict:
     author_dict["name"] = None
     # Dict {'organization' : <NAME_UNI>} as list entries
     author_dict["affiliation"] = list()
-    author_dict["affsymb"] = 2
     author_dict["email"] = None
     author_dict["orcid"] = None
 
