@@ -18,35 +18,78 @@ Before you can use XML2YAML, you need to have an OJS XML file. You can download 
 XML2YAML is an easy-to-use CLI program that takes only the filepath to the OJS XML as an input argument. Optionally, you can also pass additional arguments to the program including different metadata fields which might be missing in the XML file. The PhiMiSci version of XML2YAML-OS assumes that the YAML file should contain the following fields:
 
 ```yaml
-title: 'The Eternal Boy: A Study in Agelessness and Memory'
-subtitle: Exploring Identity, Temporality, and the Philosophy of Neverland
+---
+title: 'Cognitive control and semantic thought variability across sleep and wakefulness'
+subtitle: ''
 author:
-- name: Wendy Darling
+- name: Remington Mallett
   affiliation:
-  - organization: University of Oxford
-  email: w.darling@oxford.ac.uk
-  orcid: 0000-0002-5678-9012
-- name: Peter Pan
+  - organization: Department of Psychology, Northwestern University
+  email: mallett.remy@gmail.com
+  orcid: 0000-0001-6183-3098
+- name: Yasmeen Nahas
   affiliation:
-  - organization: SOAS London
-  - organization: Neverland
-  email: peter.pan@neverland.com
-  orcid: 0000-1101-1234-5678
-keywords:
-- Agelessness
-- Memory theory
-- Identity
-- Temporality
-- Neverland metaphysics
-- Fantasy ontology
-- Child psychology
-- Flight dynamics
+  - organization: Department of Psychology, Northwestern University
+  email: yasmeennahas2023@u.northwestern.edu
+  orcid: null
+- name: Kalina Christoff
+  affiliation:
+  - organization: Department of Psychology, University of British Columbia
+  email: kchristoff@psych.ubc.ca
+  orcid: 0000-0003-2841-8647
+- name: Ken A. Paller
+  affiliation:
+  - organization: Department of Psychology, Northwestern University
+  email: kap@northwestern.edu
+  orcid: 0000-0003-4415-4143
+- name: Caitlin Mills
+  affiliation:
+  - organization: Department of Educational Psychology, University of Minnesota
+  email: cmills@umn.edu
+  orcid: 0000-0003-4498-0496
+authorstex: |
+  ```{=latex}
+  {\color{black}\noindent \ignorespacesafterend \bfseries \noindent \hskip-3ptRemington Mallett}%
+  {\color{blue}\footnote{\label{fn-a}Department of Psychology, Northwestern University.}{\href{https://orcid.org/0000-0001-6183-3098}{\textcolor{orcidlogocol}{\aiOrcid}}}{\color{black}(mallett.remy@gmail.com)}}
+
+  {\color{black}\noindent \ignorespacesafterend \bfseries \noindent Yasmeen Nahas}%
+  {\color{blue}\(^{\textnormal{\ref{fn-a}}}\){\color{black}(yasmeennahas2023@u.northwestern.edu)}}
+
+  {\color{black}\noindent \ignorespacesafterend \bfseries \noindent Kalina Christoff}%
+  {\color{blue}\footnote{\label{fn-b}Department of Psychology, University of British Columbia.}{\href{https://orcid.org/0000-0003-2841-8647}{\textcolor{orcidlogocol}{\aiOrcid}}}{\color{black}(kchristoff@psych.ubc.ca)}}
+
+  {\color{black}\noindent \ignorespacesafterend \bfseries \noindent Ken A. Paller}%
+  {\color{blue}\(^{\textnormal{\ref{fn-a}}}\){\href{https://orcid.org/0000-0003-4415-4143}{\textcolor{orcidlogocol}{\aiOrcid}}}{\color{black}(kap@northwestern.edu)}}
+
+  {\color{black}\noindent \ignorespacesafterend \bfseries \noindent Caitlin Mills}%
+  {\color{blue}\footnote{\label{fn-c}Department of Educational Psychology, University of Minnesota.}{\href{https://orcid.org/0000-0003-4498-0496}{\textcolor{orcidlogocol}{\aiOrcid}}}{\color{black}(cmills@umn.edu)}}
+
+  \```
+keywords: [Creativity ∙ Dreaming ∙ Mind-wandering ∙ Natural language processing ∙
+    Spontaneous thought]
+tags:
+- Creativity
+- Dreaming
+- Mind-wandering
+- Natural language processing
+- Spontaneous thought
 abstract: |-
-  How does the notion of agelessness shape identity and memory in an eternal youth like Peter Pan? This article examines the metaphysics of agelessness through the lens of Peter Pan’s unchanging form and his shifting memories, drawing from theories of temporality and identity. We argue that Neverland serves as a temporal vacuum, where time functions differently, creating unique challenges to traditional philosophical concepts of identity and selfhood. The implications of living outside of time, where one remains physically unchanged but psychologically impacted by infinite experiences, are explored. This work also touches on the phenomenology of flight, a central theme in Peter Pan’s existence, as it symbolizes his defiance of physical and temporal limitations. The article situates these discussions within the broader debate on fantasy ontology and its relation to real-world psychological and philosophical frameworks.
+  The flow of thought is persistent, and at times merciless. Mental content is generated throughout the day and into the night, moving forward predictably at times but surprisingly at others. Understanding what influences the trajectory of thought—how thoughts continuously unfold over time—has important implications for the diagnosis and treatment of thought disorders like schizophrenia and recurrent nightmares. Here, we examine whether cognitive control restricts moment-to-moment content shifts across sleep and wakefulness, thus acting as a fundamental constraint on thought variability. Thought variability was measured as the semantic incoherence between sequential thought phrases and was applied to independent datasets of dreaming and waking reports. Our results show that within both sleeping and waking reports, conditions typically marked by higher levels of cognitive control were associated with decreased thought variability (i.e., semantic incoherence). During wakefulness, on-task conditions were associated with reduced levels of thought variability compared to off-task conditions, and thought variability was greater when thoughts wandered around more freely. During sleep, lucid dreams, marked by higher levels of cognitive control, were associated with reduced levels of thought variability compared to non-lucid dreams. Together, these results suggest that cognitive control may limit thought variability across the 24-hour cycle of thought generation. Such findings are consistent with the Dynamic Framework of Thought, where mental states are expected to vary on a continuum of deliberate constraints, with lower cognitive control leading to a categorical cluster of spontaneous thought processes that includes both mind-wandering during wakefulness and non-lucid dreams during sleep. This observation has broad implications for models of cognition, specifically highlighting the continuity of cognitive processes throughout the circadian cycle and the importance of considering varying levels of thought constraint in both waking and dreaming states.
+name-short: Mallett, R., Nahas, Y., Christoff, K., Paller, K. A., & Mills, C.
+name-long: Mallett, Remington, Yasmeen Nahas, Kalina Christoff, Ken A. Paller, and
+  Caitlin Mills
+name-hdr: Remington Mallett, Yasmeen Nahas, Kalina Christoff, Ken A. Paller, and Caitlin
+  Mills
+title-hdr: 'Cognitive control and semantic thought variability across sleep and wakefulness'
 date: '2024'
-volume: 7
-doi: 10.1111/12345678
-author-short: Darling, W., & Pan, P.
+volume: '*7*'
+artid: 10307
+author-meta: Remington Mallett, Yasmeen Nahas, Kalina Christoff, Ken A. Paller, Caitlin
+  Mills
+title-meta: 'Cognitive control and semantic thought variability across sleep and wakefulness.'
+specialissue: |-
+  This article is part of a special issue.
+...
 ```
 
 Note that some fields can also have empty values, which will simply cause the fields to be empty in the rendered files created with [Typesetting-Container-OS](https://github.com/phimisci/typesetting-container-os) (e.g. `subtitle`).
@@ -61,23 +104,22 @@ python xml2yaml.py article.xml
 The script will then create a file called `metadata.yaml` in the `yaml_output/` folder. You can use the following additional arguments to the script (note that these arguments overwrite potential values in the XML file):
 
 ```bash	
-usage: xml2yaml.py [-h] [-y YEAR] [-v VOLUME] [-o ORCID [ORCID ...]] [-d DOI] xml_file
+usage: xml2yaml.py [-h] [-y YEAR] [-v VOLUME] [-o ORCID [ORCID ...]] [-s SPECIALISSUE] xml_file
 
 XML2YAML-OS CLI program. Converts OJS XML to YAML.
 
 positional arguments:
   xml_file              Path to the input XML file
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -y YEAR, --year YEAR  Year of publication
   -v VOLUME, --volume VOLUME
                         Volume number
   -o ORCID [ORCID ...], --orcid ORCID [ORCID ...]
-                        ORCID key-value pairs of authors (separated via blank space when multiple authors): --orcid
-                        <AUTHOR_LASTNAME>=<ORCID> || --orcid Starke=0000-0001-1111-1111 Jurczyk=0000-0002-5943-2305
-  -d DOI, --doi DOI     DOI of the article.
-
+                        ORCID key-value pairs of authors (separated via blank space when multiple authors): --orcid <AUTHOR_LASTNAME>=<ORCID> || --orcid Starke=0000-0001-1111-1111 Jurczyk=0000-0002-5943-2305
+  -s SPECIALISSUE, --specialissue SPECIALISSUE
+                        The special issue text that appears in the beginnng of an article. Needs to be passed as one string using ".
 ```
 
 ## Docker usage
