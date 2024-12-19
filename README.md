@@ -1,9 +1,7 @@
 # XML2YAML-OS
 
 # Introduction
-XML2YAML-OS is the open source version of a CLI program initially developed for the journal [Philosophy and the Mind Sciences](https://philosophymindscience.org/). XML2YAML-OS transforms OJS XML into a YAML format for later use in the pandoc typesetting workflow. The program is written in Python and uses the `lxml` library for XML parsing. The program is designed to be used in a Docker container, but can also be used locally. The program is part of the [Magic Manuscript Maker Typesetting Workflow](https://github.com/phimisci) of the journal.
-
-The YAML format in this repository was developed in view of the default template of the [Typesetting-Container-OS](https://github.com/phimisci/typesetting-container-os). If you need to parse different attributes or elements from the OJS XML, you can easily adjust the `xml2yaml.py` script to your needs.
+This is the XML2YAML-OS version specifically designed for the needs of the journal [Philosophy and the Mind Sciences](https://philosophymindscience.org/). XML2YAML-OS transforms OJS XML into a YAML format for later use in the pandoc typesetting workflow. The program is written in Python and uses the `lxml` library for XML parsing. The program is designed to be used in a Docker container, but can also be used locally. The program is part of the [Magic Manuscript Maker Typesetting Workflow](https://github.com/phimisci) of the journal. For more information on how to use XML2YAML-OS, please refer to the README.md in the main branch.
 
 # Installation
 There are two ways to use XML2YAML: locally or in a Docker container.
@@ -17,7 +15,7 @@ You can also use XML2YAML-OS in a Docker container. You can either build the ima
 # How To
 Before you can use XML2YAML, you need to have an OJS XML file. You can download this file from the OJS backend via the [Native XML Plugin](https://docs.pkp.sfu.ca/admin-guide/3.3/en/data-import-and-export) which is installed by default from OJS 3.3 onwards. The XML file contains all the metadata of the article, such as title, authors, abstract, keywords, etc. You can start the export of a specific article under `Tools > Import/Export > Native XML Plugin > Export`.
 
-XML2YAML is an easy-to-use CLI program that takes only the filepath to the OJS XML as an input argument. Optionally, you can also pass additional arguments to the program including different metadata fields which might be missing in the XML file. The standard version of XML2YAML-OS assumes that the YAML file should contain the following fields:
+XML2YAML is an easy-to-use CLI program that takes only the filepath to the OJS XML as an input argument. Optionally, you can also pass additional arguments to the program including different metadata fields which might be missing in the XML file. The PhiMiSci version of XML2YAML-OS assumes that the YAML file should contain the following fields:
 
 ```yaml
 title: 'The Eternal Boy: A Study in Agelessness and Memory'
@@ -102,5 +100,5 @@ XML2YAML-OS was developed by Thomas Jurczyk ([thomjur](https://github.com/thomju
 
 # Versions
 
-## 1.0.0 (20.11.2024)
-- Initial release of XML2YAML-OS
+## 1.0.0 (19.12.2024)
+- Initial release of XML2YAML-OS for Philosophy and the Mind Sciences

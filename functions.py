@@ -29,38 +29,71 @@ def create_author_dict_4yaml() -> OrderedDict:
     return author_dict
 
 def create_dict_4yaml() -> OrderedDict:
-    '''Function to create an empty YAML dict that can be filled with information form OJS XML.
-
-        Returns
-        -------
-        OrderedDict
-            The empty YAML dict with keys for title, subtitle, author, keywords, tags, abstract, name-short, date, volume, doi.
-    '''
+    '''Function to create an empty YAML dict that can be filled with information form OJS XML.'''
     pandoc_yaml_dict: OrderedDict = OrderedDict()
     pandoc_yaml_dict["title"] = None
     pandoc_yaml_dict["subtitle"] = "" # Empty string because otherwise null appears in template
     pandoc_yaml_dict["author"] = list()
-    pandoc_yaml_dict["keywords"] = list()
+    pandoc_yaml_dict["authorstex"] = None
+    pandoc_yaml_dict["keywords"] = None
+    pandoc_yaml_dict["tags"] = list()
     pandoc_yaml_dict["abstract"] = None
-    pandoc_yaml_dict["author-short"] = None
+    pandoc_yaml_dict["name-short"] = None
+    pandoc_yaml_dict["name-long"] = None
+    pandoc_yaml_dict["name-hdr"] = None
+    pandoc_yaml_dict["title-hdr"] = None
     pandoc_yaml_dict["date"] = None
     pandoc_yaml_dict["volume"] = None
-    pandoc_yaml_dict["doi"] = None
+    pandoc_yaml_dict["artid"] = None
+    pandoc_yaml_dict["author-meta"] = None
+    pandoc_yaml_dict["title-meta"] = None
 
     return pandoc_yaml_dict
-    
-def create_keywords_4yaml(xml: lxml.etree._Element) -> List[str]:
-    '''Function to create a sorted tags list with separate keywords.
+
+def create_keyword_list_4yaml(xml: lxml.etree._Element) -> List[str]:
+    '''Function to create a key word list style [<KW> <KW> <KW> ... <KW>] for YAML output.
 
         Parameters
         ----------
-        xml: lxml.etree._Element
-            The node "keywords" from parent tree.
+            xml: lxml.etree._Element
+                The node "keywords" from parent tree.
 
         Returns
         -------
-        List[str]
-            The sorted list for YAML and later JATS output.
+            list(str)
+                The str for YAML output.
+
+    '''
+    string = ""
+    if len(xml) > 0:
+        keyword_list: List[str] = list()
+        for child in xml:
+            # Get all keywords from XML
+            keyword_list.append(child.text.strip().capitalize() if child.text else "NONE")
+        # Sort keywords alphabetically
+        keyword_list.sort()
+        # Create string
+        for idx,kw in enumerate(keyword_list):
+            if idx < len(keyword_list)-1:
+                string += kw + " ∙ "    
+            else:
+                string += kw
+        return [string]
+    else:
+        return ["NO KEYWORDS"]
+
+def create_tags_list_4yaml(xml: lxml.etree._Element) -> List[str]:
+    '''Function to create a tags list with separate keywords for later JATS output.
+
+        Parameters
+        ----------
+            xml: lxml.etree._Element
+                The node "keywords" from parent tree.
+
+        Returns
+        -------
+            list(str)
+                The list for YAML and later JATS output.
 
     '''
     l: List[str] = list()
@@ -70,6 +103,86 @@ def create_keywords_4yaml(xml: lxml.etree._Element) -> List[str]:
             l.append(text)
     l.sort()
     return l
+
+
+def create_latex_string(author_dict: OrderedDict) -> str:
+    '''Create latex string for pandoc yaml.
+
+        Pretty complex. First, collect all affiliations in OrderedDict and create latex footnotes. Afterwards, iterate over authors and create LaTeX based on information from author_dict plus footnote for affiliation from previous OrderedDict. 
+
+        Parameters
+        ----------
+            author_dict: OrderedDict
+                OrderedDict with author data.
+            
+        Returns
+        -------
+            Latex str for YAML output.
+
+    '''
+    ##### Create affiliation dict (LaTeX footnotes plus authors)
+    # Because latex footnotes have style fn-a, fn-b etc.
+    abc = "abcdefghijklmnopqrstuvwxyz"
+    aff_index = 0
+
+    affiliations_fn_dict: OrderedDict = OrderedDict()
+
+    # Collect affiliations
+    for author in author_dict:
+        for aff in author["affiliation"]:
+            if aff["uni"] not in affiliations_fn_dict.keys():
+                affiliations_fn_dict[aff["uni"]] = {
+                    "latex_fn": fr"\footnote{{\label{{fn-{abc[aff_index]}}}{aff['uni']}.}}",
+                    "label": f"fn-{abc[aff_index]}",
+                    "authors": [author["name"]]
+                }
+                aff_index += 1
+            else:
+                affiliations_fn_dict[aff["uni"]]["authors"].append(author["name"])
+            
+    test_string = r'```{=latex}' + '\n'
+
+    # To check if new footnote or ref should be created
+    already_used_fn = list()
+
+    for idx,author in enumerate(author_dict):
+        ### Adding NAME
+        if idx == 0:
+            test_string += fr'{{\color{{black}}\noindent \ignorespacesafterend \bfseries \noindent \hskip-3pt{author["name"]}}}%'+'\n'+ fr'{{\color{{blue}}'
+        else:
+            test_string += fr'{{\color{{black}}\noindent \ignorespacesafterend \bfseries \noindent {author["name"]}}}%'+'\n'+ fr'{{\color{{blue}}'
+
+        ### Adding AFFILIATION
+        ##### Necessary to add "," after refs in case there are more than one
+        citation_counter = 0
+        for aff in affiliations_fn_dict:
+            for aff2 in author["affiliation"]:
+                if aff in aff2["uni"]:
+                    if affiliations_fn_dict[aff]["label"] not in already_used_fn:
+                        if citation_counter > 0:
+                            # add , first
+                            test_string += r"\(^\textnormal{,}\)"
+                        test_string += affiliations_fn_dict[aff]["latex_fn"]
+                        already_used_fn.append(affiliations_fn_dict[aff]["label"])
+                        citation_counter += 1
+                    else:
+                        if citation_counter > 0:
+                            # add , first
+                            test_string += r"\(^\textnormal{,}\)"
+                        test_string += fr"\(^{{\textnormal{{\ref{{{affiliations_fn_dict[aff]['label']}}}}}}}\)"
+                        citation_counter += 1
+
+        ### Adding ORCID
+        if author["orcid"] is not None:
+            test_string += fr'{{\href{{https://orcid.org/{author["orcid"]}}}{{\textcolor{{orcidlogocol}}{{\aiOrcid}}}}}}'
+
+        ### Adding EMAIL
+        test_string += fr"{{\color{{black}}({author['email']})}}}}" + "\n\n"
+    
+    test_string += "```\n"
+
+    return test_string
+
 
 def escape_html(input: str) -> str:
     '''Function to clean text coming from OJS (title, abstract) of HTML elements etc.

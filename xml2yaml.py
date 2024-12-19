@@ -1,6 +1,7 @@
 '''
-Main file to convert OJS XML to YAML for file creation with Typesetting-Container-OS.
+Main file to convert OJS XML to PhiMiSci-YAML for file creation with Typesetting-Container-OS.
 Copyright (c) 2024 Thomas Jurczyk and Philosophy and the Mind Sciences.
+Version: 1.0.0 (2024-12-19)
 '''
 
 from yaml_setup import *
@@ -13,7 +14,7 @@ from functions import *
 import logging
 from typing import Optional, Tuple
 
-def parse_arguments() -> Tuple[Optional[str], Optional[str], Optional[int], Optional[List[str]], Optional[str]]:
+def parse_arguments() -> Tuple[Optional[str], Optional[str], Optional[int], Optional[List[str]], Optional[str], Optional[str]]:
     parser = argparse.ArgumentParser(description='XML2YAML-OS CLI program. Converts OJS XML to YAML.')
     parser.add_argument('xml_file', type=str, help='Path to the input XML file')
     # Additional year field might be necessary if the year is not present in the XML file
@@ -22,15 +23,14 @@ def parse_arguments() -> Tuple[Optional[str], Optional[str], Optional[int], Opti
     # Sometimes, the ORCID is not present in the XML file. In this case, the ORCID can be passed as a command line argument
     # Example: --orcid Starke=0000-0001-1111-1111 Jurczyk=0000-0002-5943-2305
     parser.add_argument("-o", "--orcid", type=str, nargs="+", help="ORCID key-value pairs of authors (separated via blank space when multiple authors): --orcid <AUTHOR_LASTNAME>=<ORCID> || --orcid Starke=0000-0001-1111-1111 Jurczyk=0000-0002-5943-2305")
-    # Get DOI
-    parser.add_argument("-d", "--doi", type=str, help="DOI of the article.")
+    parser.add_argument("-s", "--specialissue", type=str, help="The special issue text that appears in the beginnng of an article. Needs to be passed as one string using \".")
     # Parse arguments
     args = parser.parse_args()
     # The path to the XML file can be accessed using the args.xml_file attribute
     xml_file_path = args.xml_file
-    return (xml_file_path, args.year, args.volume, args.orcid, args.doi)
+    return (xml_file_path, args.year, args.volume, args.orcid,args.specialissue)
 
-def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str], orcid: Optional[List[str]], doi: Optional[str]) -> None:
+def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str], orcid: Optional[List[str]], special_issue: Optional[str]) -> None:
     '''Main program logic to convert XML2YAML.
 
         Parameters
@@ -42,9 +42,11 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
             volume: Optional[str]
                 Number of the volume in which the article appears (int or None).
             orcid: Optional[str]
-                String with key-value pairs of <AUTHOR_LASTNAME> and <ORCID>. Example: --orcid Starke=0000-0001-1111-1111 Jurczyk=0000-0002-5943-2305 (this string needs to be parsed later on)
+                String with key-value pairs of <AUTHOR_LASTNAME> and <ORCID>. Example: --orcid Starke=0000-0001-1111-1111 Jurczyk=0000-0002-5943-2305 (this string needs to be parsed later on.
+            special_issue: Optional[str]
+                A string with information about special issue. Used in articles that are part of a special issue. 
+
     '''
-    assert xml_filepath is not None
     # OJS XML file should be in the xml folder
     if os.environ.get("IS_CONTAINER") == "true":
         xml_filepath = "xml_input/"+xml_filepath
@@ -54,7 +56,6 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     if not os.path.isfile(xml_filepath):
         print("ERROR_NO_FILE_FOUND")
         exit()
-
     ### Parse XML
     xml_data = etree.parse(xml_filepath)
     root = xml_data.getroot()
@@ -64,17 +65,17 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
             root.remove(child)
     # Find publication node
     publication_data = root.find("{http://pkp.sfu.ca}publication")
-    # exiting if publication_data not found
+    # Exiting if publication_data not found
     if publication_data is None:
         logging.error("NO_PUBLICATION_DATA_FOUND. EXIT.")
         exit()
     # Initialize dictionary for yaml
     data_dict = create_dict_4yaml()
-
     ### Parse title
     if publication_data.find("{http://pkp.sfu.ca}title") is not None:
         # Parsing main title
         title_element = publication_data.find("{http://pkp.sfu.ca}title")
+        assert title_element is not None, "Title element not found"
         title: str = title_element.text if title_element.text else "NO_TITLE_FOUND"
         title = escape_html(title)
         # Parsing subtitle
@@ -86,32 +87,55 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
                 subtitle = escape_html(subtitle)
                 data_dict["subtitle"] = subtitle
         # Parsing title
-        # There are two potential cases:
-        # 1. Normal title ("This is an article title")
-        # 2. Title fields includes main title and subtitle ("This is an article: It is interesting" or "Is this an article? If so, it is interesting")
-        # We split on either ':' or '?' (Note: re.split + group keeps the delimiter in the list)
+        ## There are different cases:
+        ##      1. Normal title ("This is an article title")
+        ##      2. Title with main title and subtitle("This is an article: It is interesting" or "Is this an article? If so, it is interesting")
+        # Split on either : or ?
         title_list = [title.strip() for title in re.split(r"(:|\?)", title.strip(), maxsplit=1) if title != ""]
-        if len(title_list) > 3 or len(title_list) == 0: # The title seems to be missing or is incorrect
+        if len(title_list) > 3 and len(title_list) == 0: # the title seems to be missing or is incorrect
             logging.warning("There seems to be an issue with the title parsing. Please check manually.")
             data_dict["title"] = SingleQuotedString(title)
+            data_dict["title-hdr"] = SingleQuotedString(title)
+            if subtitle:
+                data_dict["title-meta"] = SingleQuotedString(f"{title}: {subtitle}.")
+            else:
+                data_dict["title-meta"] = SingleQuotedString(f"{title}.")
         else:
             # First case: main title + subtitle
             if len(title_list) == 3: 
-                # If title ends with ':' we ignore the ':', but we keep '?' in the title
                 data_dict["title"] = SingleQuotedString(title_list[0]) if title_list[1] == ":" else SingleQuotedString(title_list[0]+title_list[1])
                 data_dict["subtitle"] = SingleQuotedString(title_list[2])
-            # Second case: main title ending with ? but no subtitle
+                data_dict["title-hdr"] = SingleQuotedString(title_list[0]) if title_list[1] == ":" else SingleQuotedString(title_list[0]+title_list[1])
+                data_dict["title-meta"] = SingleQuotedString(title_list[0] + f"{title_list[1]} " + title_list[2] + ".")
+            # Second case: main title ending with ?
             elif len(title_list) == 2:
                 if title_list[1] == "?":
                     data_dict["title"] = SingleQuotedString(title_list[0]+title_list[1])
+                    data_dict["title-hdr"] = SingleQuotedString(title_list[0]+title_list[1])
+                    if subtitle:
+                        data_dict["title-meta"] = SingleQuotedString(f"{title_list[0]}? {subtitle}.")
+                    else:
+                        data_dict["title-meta"] = SingleQuotedString(f"{title_list[0]}?")
                 else:
                     data_dict["title"] = SingleQuotedString(title_list[0])
+                    data_dict["title-hdr"] = SingleQuotedString(title_list[0])
+                    if subtitle:
+                        data_dict["title-meta"] = SingleQuotedString(f"{title_list[0]}: {subtitle}.")
+                    else:
+                        data_dict["title-meta"] = SingleQuotedString(f"{title_list[0]}.")
             # Third case: only main title in title field
             else:
-                data_dict["title"] = SingleQuotedString(title_list[0])   
+                data_dict["title"] = SingleQuotedString(title_list[0])
+                data_dict["title-hdr"] = SingleQuotedString(title_list[0])
+                if subtitle:
+                    data_dict["title-meta"] = SingleQuotedString(f"{title_list[0]}: {subtitle}.")
+                else:
+                    data_dict["title-meta"] = SingleQuotedString(f"{title_list[0]}.")        
     else:
         logging.warning("No title field found in XML. Replacing with NO_TITLE_FIELD_FOUND_IN_XML.")
         data_dict["title"] = SingleQuotedString("NO_TITLE_FIELD_FOUND_IN_XML")
+        data_dict["title-hdr"] = SingleQuotedString("NO_TITLE_FIELD_FOUND_IN_XML")
+        data_dict["title-meta"] = SingleQuotedString("NO_TITLE_FIELD_FOUND_IN_XML"+".")
 
     ### Parse abstract
     if publication_data.find("{http://pkp.sfu.ca}abstract") is not None:
@@ -122,6 +146,17 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     else:
         logging.warning("No abstract field found in XML. Replacing with NO_ABSTRACT_FIELD_FOUND_IN_XML.")
         data_dict["abstract"] = LiteralString("NO_ABSTRACT_FIELD_FOUND_IN_XML")
+    
+    ##### Parse article id
+    if root.find("{http://pkp.sfu.ca}id[@type='internal']") is not None:
+        artid_element = root.find("{http://pkp.sfu.ca}id[@type='internal']")
+        assert artid_element is not None, "Article id not found found"
+        artid: str = artid_element.text if artid_element.text else "NO_ART_ID"
+        data_dict["artid"] = html.unescape(artid)
+        data_dict["artid"] = PlainInt(data_dict["artid"])
+    else:
+        logging.warning("No article ID found in XML. Replacing with -999999999.")
+        data_dict["artid"] = PlainInt(-999999999)
 
     ### Parse volume number (take XML volume if present and no arg given; arg volume always overwrites XML volume)
     if (publication_data.find(".//{http://pkp.sfu.ca}volume") is not None) and (volume is None):
@@ -140,9 +175,12 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     ### Parse keywords
     if publication_data.find(".//{http://pkp.sfu.ca}keywords") is not None:
         keyword_node = publication_data.find(".//{http://pkp.sfu.ca}keywords")
-        data_dict["keywords"] = create_keywords_4yaml(keyword_node)
+        data_dict["keywords"] = PlainList(create_keyword_list_4yaml(keyword_node))
+         ####### Parse keywords for tags metadata field for later JATS output
+        data_dict["tags"] = create_tags_list_4yaml(keyword_node)
+
     else:
-        data_dict["keywords"] = ["NO_KEYWORDS_FOUND"]
+        data_dict["keywords"] = PlainList(["NO_KEYWORDS_FOUND"])
 
     ### Parse year
     if year is not None:
@@ -160,32 +198,27 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     if orcid is not None:
         orcid_dict = parse_orcid(orcid)
 
-    ### Parse author data
+    ### Parse author data & Create LaTeX injection
     authors_node = publication_data.find(".//{http://pkp.sfu.ca}authors")
-    assert authors_node is not None, "No authors node found"
     # Counter to find first author
-    auth_index: int = 0
+    auth_index: int = 0 # Enumerate not working?!
     for author in authors_node:
         # Init author dict
         author_dict = create_author_dict_4yaml()
         # Create full name
         given_name_node = author.find(".//{http://pkp.sfu.ca}givenname")
         family_name_node = author.find(".//{http://pkp.sfu.ca}familyname")
-        assert given_name_node is not None, "Given name node not found"
-        assert family_name_node is not None, "Family name node not found"
         given_name = given_name_node.text
         family_name = family_name_node.text
-        assert given_name is not None, "Given name not found"
-        assert family_name is not None, "Family name not found"
         given_name = given_name.strip()
         family_name = family_name.strip()
         full_name = given_name + " " + family_name
-        # Add ORCID from CLI arg if present
+        # Add orcid from CLI arg if present
         if orcid_dict is not None:
             for k,v in orcid_dict.items():
                 if k.lower() in family_name.lower():
                     author_dict["orcid"] = v
-        # Add ORCID from OJS XML (if present) for entries with no explicitly set ORCID via CLI arg
+        # Add orcid from OJS XML (if present) for entries with no explicitly set ORCID via CLI arg
         orcid_node = author.find(".//{http://pkp.sfu.ca}orcid")
         if (orcid_node is not None) and (author_dict["orcid"] is None):
             if orcid_node.text is not None:
@@ -194,51 +227,60 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
         author_dict["name"] = full_name
         # Find and add email
         email_node = author.find(".//{http://pkp.sfu.ca}email")
+        assert email_node is not None, "Email node not found"
         email = email_node.text if email_node.text is not None else "NO_EMAIL_FOUND"
         author_dict["email"] = email
         # Find affiliations
         affiliations = author.findall(".//{http://pkp.sfu.ca}affiliation")
         if affiliations is not None:
-            for aff in author.findall(".//{http://pkp.sfu.ca}affiliation"):
+            for _, aff in enumerate(author.findall(".//{http://pkp.sfu.ca}affiliation")):
                 # Try to split on ;
                 if aff.text is not None:
                     aff_list = aff.text.split(";")
                     aff_list = [aff.strip() for aff in aff_list if aff.strip() != ""]
                     for aff_ in aff_list:
-                        author_dict["affiliation"].append({"organization": aff_})
-        
-        ### Create author short name
+                        author_dict["affiliation"].append({"uni": aff_})
+
+        ## Create author hdf string and short name
+
         #### First we need to create two abbreviated versions of name (part. if given name has multiple parts)
+        given_name_parsed_light: str = parse_given_name(given_name, abbr_style="light")
         given_name_parsed_full: str = parse_given_name(given_name, abbr_style="full")
 
         #### Layout for "middle" author (in case authors > 2)
         if auth_index > 0 and auth_index < len(authors_node)-1:
-            data_dict["author-short"] += ", " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
+            data_dict["name-hdr"] += ", " + SingleQuotedString(given_name_parsed_light + " " + family_name)
+            data_dict["author-meta"] += ", " + SingleQuotedString(given_name_parsed_light + " " + family_name)
+            data_dict["name-short"] += ", " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
         #### Layout for "last" author (in case authors > 2)
         elif auth_index > 0 and auth_index == len(authors_node)-1 and auth_index != 1:
-            data_dict["author-short"] += ", & " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
+            data_dict["name-hdr"] += ", and " + SingleQuotedString(given_name_parsed_light + " " + family_name)
+            data_dict["author-meta"] += ", " + SingleQuotedString(given_name_parsed_light + " " + family_name)
+            data_dict["name-short"] += ", & " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
         #### Layout second author of exactly two authors
         elif auth_index == 1 and auth_index == len(authors_node)-1:
-            data_dict["author-short"] += ", & " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
+            data_dict["name-hdr"] += " and " + SingleQuotedString(given_name_parsed_light + " " + family_name)
+            data_dict["author-meta"] += ", " + SingleQuotedString(given_name_parsed_light + " " + family_name)
+            data_dict["name-short"] += ", & " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
         #### Layout for first or only one author
         else:
-            data_dict["author-short"] = SingleQuotedString(family_name + ", " + given_name_parsed_full)
+            data_dict["name-hdr"] = SingleQuotedString(given_name_parsed_light + " " + family_name)
+            data_dict["author-meta"] = SingleQuotedString(given_name_parsed_light + " " + family_name)
+            data_dict["name-short"] = SingleQuotedString(family_name + ", " + given_name_parsed_full)
 
         ### Add author information to data_dict
         data_dict["author"].append(author_dict)
 
         # Increment auth idx
         auth_index += 1
+        
+    #### Create LaTeX for all authors in author dicts
+    latex_author = create_latex_string(data_dict["author"])
+    data_dict["authorstex"] = LiteralString(latex_author)
 
-    ### Parse DOI
-    if publication_data.find(".//{http://pkp.sfu.ca}id[@type='doi']") is not None:
-        doi_element = publication_data.find(".//{http://pkp.sfu.ca}id[@type='doi']")
-        doi_xml = doi_element.text if doi_element.text else "NO_DOI_FOUND"
-        data_dict["doi"] = SingleQuotedString(doi_xml)
-    if doi is not None: # Important: DOI from CLI argument overwrites XML DOI!!
-        data_dict["doi"] = SingleQuotedString(doi)
-    elif data_dict["doi"] is None:
-        data_dict["doi"] = "NO_DOI_FOUND"
+    ##### PARSE SPECIAL ISSUE STRING
+    if special_issue is not None:
+        data_dict["specialissue"] = LiteralString(special_issue)  
 
     ### Save YAML metadata
     with open("yaml_output/metadata.yaml", "w", encoding="utf-8") as f:
@@ -246,6 +288,6 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
 
 if __name__ == "__main__":
     # Parse arguments
-    xml_file_path, year, volume, orcid, doi = parse_arguments()
+    xml_file_path, year, volume, orcid, special_issue = parse_arguments()
     # Run main program
-    main(xml_file_path, year, volume, orcid, doi)
+    main(xml_file_path, year, volume, orcid, special_issue)
