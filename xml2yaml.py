@@ -198,81 +198,92 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     if orcid is not None:
         orcid_dict = parse_orcid(orcid)
 
-    ### Parse author data & Create LaTeX injection
+    ##### PARSE AUTHOR DATA & CREATE LATEX - TODO: catch missing entries
     authors_node = publication_data.find(".//{http://pkp.sfu.ca}authors")
-    # Counter to find first author
-    auth_index: int = 0 # Enumerate not working?!
+    assert authors_node is not None, "No authors node found"
+    # counter to find first author
+    auth_index: int = 0 # enumerate not working?!
     for author in authors_node:
-        # Init author dict
+        # init author dict
         author_dict = create_author_dict_4yaml()
-        # Create full name
+        # create full name
         given_name_node = author.find(".//{http://pkp.sfu.ca}givenname")
         family_name_node = author.find(".//{http://pkp.sfu.ca}familyname")
+        assert given_name_node is not None, "Given name node not found"
+        assert family_name_node is not None, "Family name node not found"
         given_name = given_name_node.text
         family_name = family_name_node.text
+        assert given_name is not None, "Given name not found"
+        assert family_name is not None, "Family name not found"
         given_name = given_name.strip()
         family_name = family_name.strip()
         full_name = given_name + " " + family_name
-        # Add orcid from CLI arg if present
+        # add orcid from CLI arg if present
         if orcid_dict is not None:
             for k,v in orcid_dict.items():
                 if k.lower() in family_name.lower():
                     author_dict["orcid"] = v
-        # Add orcid from OJS XML (if present) for entries with no explicitly set ORCID via CLI arg
+        # add orcid from OJS XML (if present) for entries with no explicitly set ORCID via CLI arg
         orcid_node = author.find(".//{http://pkp.sfu.ca}orcid")
         if (orcid_node is not None) and (author_dict["orcid"] is None):
             if orcid_node.text is not None:
                 author_dict["orcid"] = orcid_node.text.split(r"/")[-1]
-        # Add name
+        # add name
         author_dict["name"] = full_name
-        # Find and add email
+        # find and add email
         email_node = author.find(".//{http://pkp.sfu.ca}email")
         assert email_node is not None, "Email node not found"
         email = email_node.text if email_node.text is not None else "NO_EMAIL_FOUND"
         author_dict["email"] = email
-        # Find affiliations
+        # find affiliations
+        aff_str: str = ""
         affiliations = author.findall(".//{http://pkp.sfu.ca}affiliation")
         if affiliations is not None:
-            for _, aff in enumerate(author.findall(".//{http://pkp.sfu.ca}affiliation")):
-                # Try to split on ;
+            for idx, aff in enumerate(author.findall(".//{http://pkp.sfu.ca}affiliation")):
+                # try to split on ;
                 if aff.text is not None:
                     aff_list = aff.text.split(";")
                     aff_list = [aff.strip() for aff in aff_list if aff.strip() != ""]
                     for aff_ in aff_list:
-                        author_dict["affiliation"].append({"uni": aff_})
+                        author_dict["affiliation"].append({"organization": aff_})
+        
+        ## create author hdf string and short name
 
-        ## Create author hdf string and short name
-
-        #### First we need to create two abbreviated versions of name (part. if given name has multiple parts)
+        #### first we need to create two abbreviated versions of name (part. if given name has multiple parts)
         given_name_parsed_light: str = parse_given_name(given_name, abbr_style="light")
         given_name_parsed_full: str = parse_given_name(given_name, abbr_style="full")
 
-        #### Layout for "middle" author (in case authors > 2)
+        #### layout for "middle" author (in case authors > 2)
         if auth_index > 0 and auth_index < len(authors_node)-1:
             data_dict["name-hdr"] += ", " + SingleQuotedString(given_name_parsed_light + " " + family_name)
             data_dict["author-meta"] += ", " + SingleQuotedString(given_name_parsed_light + " " + family_name)
             data_dict["name-short"] += ", " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
-        #### Layout for "last" author (in case authors > 2)
+            data_dict["name-long"] += ", " + SingleQuotedString(given_name + " " + family_name)
+        #### layout for "last" author (in case authors > 2)
         elif auth_index > 0 and auth_index == len(authors_node)-1 and auth_index != 1:
             data_dict["name-hdr"] += ", and " + SingleQuotedString(given_name_parsed_light + " " + family_name)
             data_dict["author-meta"] += ", " + SingleQuotedString(given_name_parsed_light + " " + family_name)
             data_dict["name-short"] += ", & " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
-        #### Layout second author of exactly two authors
+            data_dict["name-long"] += ", and " + SingleQuotedString(given_name + " " + family_name)
+        #### layout second author of exactly two authors
         elif auth_index == 1 and auth_index == len(authors_node)-1:
             data_dict["name-hdr"] += " and " + SingleQuotedString(given_name_parsed_light + " " + family_name)
             data_dict["author-meta"] += ", " + SingleQuotedString(given_name_parsed_light + " " + family_name)
             data_dict["name-short"] += ", & " + SingleQuotedString(family_name + ", " + given_name_parsed_full)
-        #### Layout for first or only one author
+            data_dict["name-long"] += ", and " + SingleQuotedString(given_name + " " + family_name)
+        #### layout for first or only one author
         else:
             data_dict["name-hdr"] = SingleQuotedString(given_name_parsed_light + " " + family_name)
             data_dict["author-meta"] = SingleQuotedString(given_name_parsed_light + " " + family_name)
             data_dict["name-short"] = SingleQuotedString(family_name + ", " + given_name_parsed_full)
+            data_dict["name-long"] = SingleQuotedString(family_name + ", " + given_name)
 
-        ### Add author information to data_dict
+        ### add author information to data_dict
         data_dict["author"].append(author_dict)
 
-        # Increment auth idx
+        # increment auth idx
         auth_index += 1
+
         
     #### Create LaTeX for all authors in author dicts
     latex_author = create_latex_string(data_dict["author"])

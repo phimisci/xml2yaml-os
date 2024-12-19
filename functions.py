@@ -120,44 +120,44 @@ def create_latex_string(author_dict: OrderedDict) -> str:
             Latex str for YAML output.
 
     '''
-    ##### Create affiliation dict (LaTeX footnotes plus authors)
-    # Because latex footnotes have style fn-a, fn-b etc.
+    ##### create affiliation dict (LaTeX footnotes plus authors)
+    # because latex footnotes have style fn-a, fn-b etc.
     abc = "abcdefghijklmnopqrstuvwxyz"
     aff_index = 0
 
     affiliations_fn_dict: OrderedDict = OrderedDict()
 
-    # Collect affiliations
+    # collect affiliations
     for author in author_dict:
         for aff in author["affiliation"]:
-            if aff["uni"] not in affiliations_fn_dict.keys():
-                affiliations_fn_dict[aff["uni"]] = {
-                    "latex_fn": fr"\footnote{{\label{{fn-{abc[aff_index]}}}{aff['uni']}.}}",
+            if aff["organization"] not in affiliations_fn_dict.keys():
+                affiliations_fn_dict[aff["organization"]] = {
+                    "latex_fn": fr"\footnote{{\label{{fn-{abc[aff_index]}}}{aff['organization']}.}}",
                     "label": f"fn-{abc[aff_index]}",
                     "authors": [author["name"]]
                 }
                 aff_index += 1
             else:
-                affiliations_fn_dict[aff["uni"]]["authors"].append(author["name"])
+                affiliations_fn_dict[aff["organization"]]["authors"].append(author["name"])
             
     test_string = r'```{=latex}' + '\n'
 
-    # To check if new footnote or ref should be created
+    # to check if new footnote or ref should be created
     already_used_fn = list()
 
     for idx,author in enumerate(author_dict):
-        ### Adding NAME
+        ### adding NAME
         if idx == 0:
             test_string += fr'{{\color{{black}}\noindent \ignorespacesafterend \bfseries \noindent \hskip-3pt{author["name"]}}}%'+'\n'+ fr'{{\color{{blue}}'
         else:
             test_string += fr'{{\color{{black}}\noindent \ignorespacesafterend \bfseries \noindent {author["name"]}}}%'+'\n'+ fr'{{\color{{blue}}'
 
-        ### Adding AFFILIATION
-        ##### Necessary to add "," after refs in case there are more than one
+        ### adding AFFILIATION
+        ##### necessary to add "," after refs in case there are more than one
         citation_counter = 0
         for aff in affiliations_fn_dict:
             for aff2 in author["affiliation"]:
-                if aff in aff2["uni"]:
+                if aff in aff2["organization"]:
                     if affiliations_fn_dict[aff]["label"] not in already_used_fn:
                         if citation_counter > 0:
                             # add , first
@@ -172,17 +172,16 @@ def create_latex_string(author_dict: OrderedDict) -> str:
                         test_string += fr"\(^{{\textnormal{{\ref{{{affiliations_fn_dict[aff]['label']}}}}}}}\)"
                         citation_counter += 1
 
-        ### Adding ORCID
+        ### adding ORCID
         if author["orcid"] is not None:
             test_string += fr'{{\href{{https://orcid.org/{author["orcid"]}}}{{\textcolor{{orcidlogocol}}{{\aiOrcid}}}}}}'
 
-        ### Adding EMAIL
+        ### adding EMAIL
         test_string += fr"{{\color{{black}}({author['email']})}}}}" + "\n\n"
     
     test_string += "```\n"
 
     return test_string
-
 
 def escape_html(input: str) -> str:
     '''Function to clean text coming from OJS (title, abstract) of HTML elements etc.
