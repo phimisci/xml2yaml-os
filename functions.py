@@ -203,6 +203,7 @@ def escape_html(input: str) -> str:
     input = re.sub(r"\s{2,}", " ", input)
     # Replacing html <b> and <em> with markdown equivalents
     input = re.sub(r"<em>|</em>", r"*", input)
+    input = re.sub(r"<i>|</i>", r"*", input)
     input = re.sub(r"<b>|</b>", r"**", input)
     # Remove remaining HTML tags using BeautifulSoup
     soup = BeautifulSoup(input, "html.parser")
