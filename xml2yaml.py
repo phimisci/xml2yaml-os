@@ -206,6 +206,8 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     for author in authors_node:
         # init author dict
         author_dict = create_author_dict_4yaml()
+        # Store OJS ID of current author
+        author_dict["ojs-id"] = author.attrib["id"]
         # create full name
         given_name_node = author.find(".//{http://pkp.sfu.ca}givenname")
         family_name_node = author.find(".//{http://pkp.sfu.ca}familyname")
@@ -283,6 +285,17 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
 
         # increment auth idx
         auth_index += 1
+
+    # Primary contact from OJS data
+    ojs_id_of_primary = publication_data.attrib["primary_contact_id"]
+    # Loop over all authors and check who is primary contact
+    for a in data_dict["author"]:
+        if a["ojs-id"] == ojs_id_of_primary:
+            data_dict["contact_email"] = a["email"]
+            break
+    else:
+        data_dict["contact_email"] = "Adress of primary contact not found."
+
 
         
     #### Create LaTeX for all authors in author dicts
