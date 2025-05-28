@@ -286,15 +286,20 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
         # increment auth idx
         auth_index += 1
 
-    # Primary contact from OJS data
-    ojs_id_of_primary = publication_data.attrib["primary_contact_id"]
-    # Loop over all authors and check who is primary contact
-    for a in data_dict["author"]:
-        if a["ojs-id"] == ojs_id_of_primary:
-            data_dict["contact_email"] = a["email"]
-            break
-    else:
-        data_dict["contact_email"] = "Adress of primary contact not found."
+    try:
+        # Primary contact from OJS data
+        ojs_id_of_primary = publication_data.attrib["primary_contact_id"]
+        # Loop over all authors and check who is primary contact
+        for a in data_dict["author"]:
+            if a["ojs-id"] == ojs_id_of_primary:
+                data_dict["contact_name"] = a["name"]
+                data_dict["contact_email"] = a["email"]
+                break
+    except KeyError:
+        # No information about primary contact found (e.g., because none 
+        # indicated in OJS)
+        data_dict["contact_name"] = ""
+        data_dict["contact_email"] = ""
 
 
         
