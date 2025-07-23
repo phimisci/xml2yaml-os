@@ -47,6 +47,7 @@ def create_dict_4yaml() -> OrderedDict:
     pandoc_yaml_dict["artid"] = None
     pandoc_yaml_dict["author-meta"] = None
     pandoc_yaml_dict["title-meta"] = None
+    pandoc_yaml_dict["contact"] = ""
 
     return pandoc_yaml_dict
 
