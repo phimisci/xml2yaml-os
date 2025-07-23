@@ -70,7 +70,13 @@ def create_keyword_list_4yaml(xml: lxml.etree._Element) -> List[str]:
         keyword_list: List[str] = list()
         for child in xml:
             # Get all keywords from XML
-            keyword_list.append(child.text.strip().capitalize() if child.text else "NONE")
+            if child.text:
+                keyword_string = child.text.strip()
+                keyword_list.append(
+                    keyword_string[0].upper() + keyword_string[1:]
+                )
+            else:
+                keyword_list.append("NONE")
         # Sort keywords alphabetically
         keyword_list.sort()
         # Create string
@@ -100,7 +106,11 @@ def create_tags_list_4yaml(xml: lxml.etree._Element) -> List[str]:
     l: List[str] = list()
     if len(xml) > 0:
         for child in xml:
-            text: str = child.text.strip().capitalize() if child.text else ""
+            if child.text:
+                tag_string = child.text.strip()
+                text = tag_string[0].upper() + tag_string[1:]
+            else:
+                text = ""
             l.append(text)
     l.sort()
     return l
