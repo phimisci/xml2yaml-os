@@ -387,7 +387,8 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     # PARSE SPECIAL ISSUE STRING
     if issue_type in ["symposium", "specialissue"]:
         data_dict["issue"]["type"] = LiteralString(issue_type)
-        data_dict["issue"]["title"] = str(special_issue).strip()
+        issue_title_string = str(special_issue).strip()
+        data_dict["issue"]["title"] = issue_title_string
         data_dict["issue"]["editors"] = LiteralString(issue_editors)
         issue_editors_string = parse_name_list(str(issue_editors))
 
@@ -397,15 +398,15 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
 
             if issue_editors_string != str(None):
                 data_dict["specialissue"] = "This article is part of a symposium" \
-                f" on {issue_book_authors_string}’s book “{special_issue}”, " \
+                f" on {issue_book_authors_string}’s book “{issue_title_string}”, " \
                 f"edited by {issue_editors_string}."
             else:
                 data_dict["specialissue"] = "This article is part of a symposium" \
-                     f" on {issue_book_authors_string}’s book “{special_issue}”."
+                     f" on {issue_book_authors_string}’s book “{issue_title_string}”."
         
         if issue_type == "specialissue":
             data_dict["specialissue"] = "This article is part of a special" \
-                f" issue on “{special_issue}”, edited by {issue_editors_string}."
+                f" issue on “{issue_title_string}”, edited by {issue_editors_string}."
 
 
     # Save YAML metadata
