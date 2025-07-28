@@ -33,6 +33,7 @@ def create_dict_4yaml() -> OrderedDict:
     pandoc_yaml_dict: OrderedDict = OrderedDict()
     pandoc_yaml_dict["title"] = None
     pandoc_yaml_dict["subtitle"] = "" # Empty string because otherwise null appears in template
+    pandoc_yaml_dict["issue"] = dict()
     pandoc_yaml_dict["author"] = list()
     pandoc_yaml_dict["authorstex"] = None
     pandoc_yaml_dict["keywords"] = None
@@ -289,4 +290,20 @@ def parse_orcid(author_orcid_list: List[str]) -> Dict[str, str]:
             author_orcid_dict[author_name] = orcid
     return author_orcid_dict
 
+def parse_name_list(input_string: str, *, separator=";"):
+    """
+    Split, `input_string`, a list of names separated by `separator`. Then, 
+    construct an output string where (the last) two names are separated by
+    an ampersand, and name pairs before the final two with commas.
+    """
+    splits = input_string.split(sep=separator)
+    output_string = ""
+
+    while splits:
+        output_string += splits.pop(0).strip()
+        if len(splits) == 1:
+            output_string += " & "
+        if len(splits) > 1:
+            output_string += ", "
     
+    return output_string
