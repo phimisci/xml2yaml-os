@@ -16,8 +16,7 @@ import logging
 from typing import Optional, Tuple
 
 
-def parse_arguments() -> Tuple[Optional[str], Optional[str], Optional[int], 
-                               Optional[List[str]], Optional[str], Optional[str]]:
+def parse_arguments():
     parser = argparse.ArgumentParser(
         description='XML2YAML-OS CLI program. Converts OJS XML to YAML.')
     parser.add_argument('xml_file', type=str,
@@ -36,20 +35,30 @@ def parse_arguments() -> Tuple[Optional[str], Optional[str], Optional[int],
                         || --orcid Starke=0000-0001-1111-1111 
                         Jurczyk=0000-0002-5943-2305"""
                         )
-    parser.add_argument("-s", "--specialissue", type=str,
-                        help="""The special issue text that appears in the 
-                        beginnng of an article. Needs to be passed as one 
-                        string using \."""
+    parser.add_argument("--issue_type", type=str, help="Indicate type of SI.")
+    parser.add_argument("--issue_editors", type=str, 
+                        help="""Names of editors of a special issue, separated 
+                                by semicolons."""
+                                )
+    parser.add_argument("--issue_book_authors", type=str, 
+                        help="""If your issue is a book symposium, stores the
+                                names of the authors of the discussed book.""")
+    parser.add_argument("-s", "--special_issue", type=str,
+                        help="""The title of the SI or book being discussed."""
                         )
     # Parse arguments
     args = parser.parse_args()
     # The path to the XML file can be accessed using the args.xml_file attribute
     xml_file_path = args.xml_file
-    return (xml_file_path, args.year, args.volume, args.orcid, args.specialissue)
+    return (xml_file_path, args.year, args.volume, args.orcid, 
+            args.special_issue, args.issue_type, args.issue_editors, 
+            args.issue_book_authors)
 
 
 def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str], 
-         orcid: Optional[List[str]], special_issue: Optional[str]) -> None:
+         orcid: Optional[List[str]], special_issue: Optional[str], 
+         issue_type: Optional[str], issue_editors: Optional[str], 
+         issue_book_authors: Optional[str]) -> None:
     '''Main program logic to convert XML2YAML.
 
         Parameters
@@ -376,8 +385,28 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     data_dict["authorstex"] = LiteralString(latex_author)
 
     # PARSE SPECIAL ISSUE STRING
-    if special_issue is not None:
-        data_dict["specialissue"] = LiteralString(special_issue)
+    if issue_type in ["symposium", "specialissue"]:
+        data_dict["issue"]["type"] = LiteralString(issue_type)
+        data_dict["issue"]["title"] = LiteralString(special_issue)
+        data_dict["issue"]["editors"] = LiteralString(issue_editors)
+        issue_editors_string = parse_name_list(str(issue_editors))
+
+        if issue_type == "symposium":
+            data_dict["issue"]["bookauthors"] = LiteralString(issue_book_authors)
+            issue_book_authors_string = parse_name_list(str(issue_book_authors))
+
+            if issue_editors_string != str(None):
+                data_dict["specialissue"] = "This article is part of a symposium" \
+                f" on {issue_book_authors_string}’s book “{special_issue}”, " \
+                f"edited by {issue_editors_string}."
+            else:
+                data_dict["specialissue"] = "This article is part of a symposium" \
+                     f" on {issue_book_authors_string}’s book “{special_issue}”."
+        
+        if issue_type == "specialissue":
+            data_dict["specialissue"] = "This article is part of a special" \
+                f" issue on “{special_issue}”, edited by {issue_editors_string}."
+
 
     # Save YAML metadata
     with open("yaml_output/metadata.yaml", "w", encoding="utf-8") as f:
@@ -387,6 +416,8 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
 
 if __name__ == "__main__":
     # Parse arguments
-    xml_file_path, year, volume, orcid, special_issue = parse_arguments()
+    (xml_file_path, year, volume, orcid, special_issue, issue_type, 
+     issue_editors, issue_book_authors) = parse_arguments()
     # Run main program
-    main(xml_file_path, year, volume, orcid, special_issue)
+    main(xml_file_path, year, volume, orcid, special_issue, issue_type, 
+         issue_editors, issue_book_authors)
