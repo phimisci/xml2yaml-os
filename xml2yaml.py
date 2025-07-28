@@ -387,7 +387,7 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
     # PARSE SPECIAL ISSUE STRING
     if issue_type in ["symposium", "specialissue"]:
         data_dict["issue"]["type"] = LiteralString(issue_type)
-        data_dict["issue"]["title"] = LiteralString(special_issue)
+        data_dict["issue"]["title"] = str(special_issue).strip()
         data_dict["issue"]["editors"] = LiteralString(issue_editors)
         issue_editors_string = parse_name_list(str(issue_editors))
 
