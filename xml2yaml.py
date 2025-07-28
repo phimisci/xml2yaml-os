@@ -218,12 +218,8 @@ def main(xml_filepath: Optional[str], year: Optional[str], volume: Optional[str]
         volume_element = publication_data.find(".//{http://pkp.sfu.ca}volume")
         volume_no: str = volume_element.text if volume_element.text else "NO_VOL_NUMBER"
         data_dict["volume"] = html.unescape(volume_no)
-        data_dict["volume"] = "*"+data_dict["volume"]+"*"
-        data_dict["volume"] = data_dict["volume"]
     elif volume is not None:
         data_dict["volume"] = html.unescape(volume)
-        data_dict["volume"] = "*"+data_dict["volume"]+"*"
-        data_dict["volume"] = data_dict["volume"]
     else:
         data_dict["volume"] = "NO_VOL_NUMBER_FOUND"
 
