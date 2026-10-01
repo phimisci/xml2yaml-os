@@ -71,8 +71,18 @@ def create_keyword_list_4yaml(xml: lxml.etree._Element) -> List[str]:
         keyword_list: List[str] = list()
         for child in xml:
             # Get all keywords from XML
-            if child.text:
-                keyword_string = child.text.strip()
+            # In recent versions, the OJS XML structure for keywords is
+            # <keywords locale="en">
+            #   <keyword>
+            #        <name>AI consciousness</name>
+            #   </keyword>
+            # </keywords>
+            keyword_name = child.find("{http://pkp.sfu.ca}name")
+            if keyword_name is not None and keyword_name.text:
+                keyword_string = keyword_name.text.strip()
+                if not keyword_string:
+                    keyword_list.append("NONE")
+                    continue
                 keyword_list.append(
                     keyword_string[0].upper() + keyword_string[1:]
                 )
@@ -107,9 +117,20 @@ def create_tags_list_4yaml(xml: lxml.etree._Element) -> List[str]:
     l: List[str] = list()
     if len(xml) > 0:
         for child in xml:
-            if child.text:
-                tag_string = child.text.strip()
-                text = tag_string[0].upper() + tag_string[1:]
+            # Get all keywords from XML
+            # In recent versions, the OJS XML structure for keywords is
+            # <keywords locale="en">
+            #   <keyword>
+            #        <name>AI consciousness</name>
+            #   </keyword>
+            # </keywords>
+            keyword_name = child.find("{http://pkp.sfu.ca}name")
+            if keyword_name is not None and keyword_name.text:
+                keyword_string = keyword_name.text.strip()
+                if not keyword_string:
+                    l.append("")
+                    continue
+                text = keyword_string[0].upper() + keyword_string[1:]
             else:
                 text = ""
             l.append(text)
